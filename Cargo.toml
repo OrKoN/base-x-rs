@@ -6,6 +6,9 @@ authors = ["Alex R. <alexei.rudenko@gmail.com>"]
 license = "MIT"
 license-file = "LICENSE.md"
 readme = "README.md"
+keywords = ["base-x", "base", "convert"]
+repository = "https://github.com/OrKoN/base-x-rs"
+homepage = "https://github.com/OrKoN/base-x-rs"
 
 [dev-dependencies]
 rustc-serialize = "0.3"
