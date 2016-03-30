@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright base-x contributors (c) 2016 
+Copyright base-x contributors and Oleksii Rudenko (c) 2016
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
