@@ -3,7 +3,6 @@ name = "base-x"
 description = "Encode/decode any base"
 version = "0.1.0"
 authors = ["Alex R. <alexei.rudenko@gmail.com>"]
-license = "MIT"
 license-file = "LICENSE.md"
 readme = "README.md"
 keywords = ["base-x", "base", "convert"]

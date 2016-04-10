@@ -4,10 +4,15 @@ pub fn encode(alphabet: &str, input: Vec<i16>) -> String {
   if input.len() == 0 {
     return String::new();
   }
+
   let base = alphabet.len() as i16;
+  let mut alphabet_map = HashMap::with_capacity(alphabet.len());
+
+  for (i, c) in alphabet.chars().enumerate() {
+    alphabet_map.insert(i, c);
+  }
 
   let mut digits: Vec<i16> = vec![0];
-
   for c in &input {
     let mut j = 0;
     let mut carry = *c;
@@ -34,11 +39,11 @@ pub fn encode(alphabet: &str, input: Vec<i16>) -> String {
     }
   }
 
-  let mut output = String::new();
-
-  for i in (0..digits.len()).rev() {
-    let chr = alphabet.chars().nth(digits[i] as usize).unwrap();
-    output.push_str(&chr.to_string());
+  let digits_len = digits.len();
+  let mut output = String::with_capacity(digits_len);
+  for i in (0..digits_len).rev() {
+    let chr = alphabet_map.get(&(digits[i] as usize)).unwrap();
+    output.push(*chr);
   }
 
   return output;
