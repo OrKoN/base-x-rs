@@ -12,7 +12,10 @@ pub fn encode(alphabet: &str, input: Vec<i16>) -> String {
     alphabet_map.insert(i, c);
   }
 
-  let mut digits: Vec<i16> = vec![0];
+  let mut digits: Vec<i16> = Vec::with_capacity(input.len());
+
+  digits.push(0);
+
   for c in &input {
     let mut j = 0;
     let mut carry = *c;
