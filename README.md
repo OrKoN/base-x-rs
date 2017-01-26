@@ -18,8 +18,8 @@ base-x = "0.1.0"
 extern crate base_x;
 
 fn main() {
-  let decoded = base_x::decode("01", "11111111000000001111111100000000");
-  let encoded = base_x::encode("01", decoded);
+  let decoded = base_x::decode("01", "11111111000000001111111100000000").unwrap();
+  let encoded = base_x::encode("01", decoded).unwrap();
   assert_eq!(encoded, "11111111000000001111111100000000");
 }
 
