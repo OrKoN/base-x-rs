@@ -7,7 +7,7 @@ And this my very first Rust project: please review the source code!
 
 Add this to `Cargo.toml` file:
 
-```
+```toml
 [dependencies]
 base-x = "0.2.0"
 ```
@@ -18,12 +18,10 @@ base-x = "0.2.0"
 extern crate base_x;
 
 fn main() {
-  let alphabet = "01";
-  let decoded = base_x::decode(alphabet.as_bytes(), "11111111000000001111111100000000").unwrap();
-  let encoded = base_x::encode(alphabet.as_bytes(), decoded).unwrap();
-  assert_eq!(encoded, "11111111000000001111111100000000");
+    let decoded = base_x::decode("01", "11111111000000001111111100000000").unwrap();
+    let encoded = base_x::encode("01", &decoded);
+    assert_eq!(encoded, "11111111000000001111111100000000");
 }
-
 ```
 
 ## Changelog
