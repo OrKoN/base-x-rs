@@ -2,6 +2,11 @@
 /// !
 /// ! Encode and decode any base alphabet.
 
+mod alphabet;
+
+pub use alphabet::Alphabet;
+use alphabet::INVALID_INDEX;
+
 use std::error::Error;
 use std::fmt;
 
@@ -21,12 +26,13 @@ impl Error for DecodeError {
 }
 
 /// Encode an input vector using the given alphabet.
-pub fn encode(alphabet: &[u8], input: &[u8]) -> String {
+pub fn encode<A: Alphabet>(alphabet: A, input: &[u8]) -> String {
     if input.len() == 0 {
         return String::new();
     }
 
-    let base = alphabet.len() as u16;
+    let base = alphabet.base() as u16;
+    let alphabet = alphabet.as_bytes();
 
     let mut digits: Vec<u16> = Vec::with_capacity(input.len());
 
@@ -65,30 +71,19 @@ pub fn encode(alphabet: &[u8], input: &[u8]) -> String {
 }
 
 /// Decode an input vector using the given alphabet.
-pub fn decode(alphabet: &[u8], input: &str) -> Result<Vec<u8>, DecodeError> {
+pub fn decode<A: Alphabet>(alphabet: A, input: &str) -> Result<Vec<u8>, DecodeError> {
     if input.len() == 0 {
         return Ok(Vec::new());
     }
 
-    let base = alphabet.len() as u16;
-
-    // Alphabet cannot be longer than 255 bytes, so 0xFF is a safe bet for an
-    // invalid index.
-    const INVALID: u8 = 0xFF;
-
-    // Ideally this lookup table would be generated on compile time for
-    // All the alphabets. That said, this should be pretty darn fast anyway.
-    let mut alphabet_lut = [INVALID; 256];
-
-    for (i, byte) in alphabet.iter().enumerate() {
-        alphabet_lut[*byte as usize] = i as u8;
-    }
+    let base = alphabet.base() as u16;
+    let alphabet_lut = alphabet.lookup_table();
 
     let mut bytes: Vec<u8> = vec![0];
 
     for c in input.as_bytes() {
         let mut carry = match alphabet_lut[*c as usize] {
-            INVALID => return Err(DecodeError),
+            INVALID_INDEX => return Err(DecodeError),
             carry => carry,
         } as u16;
 
@@ -104,7 +99,7 @@ pub fn decode(alphabet: &[u8], input: &str) -> Result<Vec<u8>, DecodeError> {
         }
     }
 
-    let leader = alphabet[0];
+    let leader = alphabet.as_bytes()[0];
 
     let leaders = input
         .bytes()
@@ -121,8 +116,8 @@ pub fn decode(alphabet: &[u8], input: &str) -> Result<Vec<u8>, DecodeError> {
 mod test {
     use super::encode;
     use super::decode;
-    extern crate rustc_serialize;
-    use self::rustc_serialize::json::{self, Json};
+    extern crate json;
+    use self::json::parse;
     use std::fs::File;
     use std::io::Read;
 
@@ -132,20 +127,16 @@ mod test {
         let mut data = String::new();
         file.read_to_string(&mut data).unwrap();
 
-        let json = Json::from_str(&data).unwrap();
-        let alphabets = json.as_object().unwrap().get("alphabets").unwrap().as_object().unwrap();
-        let valid = json.as_object().unwrap().get("valid").unwrap().as_array().unwrap();
+        let json = parse(&data).unwrap();
+        let alphabets = &json["alphabets"];
 
-        for value in valid {
-            let obj = value.as_object().unwrap();
-            let alphabet_name = obj.get("alphabet").unwrap().to_string();
-            let alphabet_name: String = json::decode(&alphabet_name).unwrap();
-            let input = obj.get("string").unwrap().to_string();
-            let input: String = json::decode(&input).unwrap();
-            let alphabet = alphabets.get(&alphabet_name).unwrap().to_string();
-            let alphabet: String = json::decode(&alphabet).unwrap();
-            let decoded = decode(alphabet.as_bytes(), &input).unwrap();
-            let encoded = encode(alphabet.as_bytes(), &decoded);
+        for value in json["valid"].members() {
+            let alphabet_name = value["alphabet"].as_str().unwrap();
+            let input = value["string"].as_str().unwrap();
+            let alphabet = alphabets[alphabet_name].as_str().unwrap();
+
+            let decoded = decode(alphabet, input).unwrap();
+            let encoded = encode(alphabet, &decoded);
             println!("'{:?}' - '{:?}'", input, encoded);
             assert_eq!(encoded, input);
         }
