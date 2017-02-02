@@ -11,3 +11,9 @@ homepage = "https://github.com/OrKoN/base-x-rs"
 
 [dev-dependencies]
 json = "0.11"
+bencher = "0.1"
+rand = "0.3"
+
+[[bench]]
+name = "base"
+harness = false
