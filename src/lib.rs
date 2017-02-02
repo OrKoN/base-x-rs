@@ -25,8 +25,7 @@
 
 mod alphabet;
 
-pub use alphabet::Alphabet;
-use alphabet::INVALID_INDEX;
+pub use alphabet::{Alphabet, CharlookUp};
 
 use std::error::Error;
 use std::fmt;
@@ -53,7 +52,6 @@ pub fn encode<A: Alphabet>(alphabet: A, input: &[u8]) -> String {
     }
 
     let base = alphabet.base() as u16;
-    let alphabet = alphabet.as_bytes();
 
     let mut digits: Vec<u16> = Vec::with_capacity(input.len());
 
@@ -85,10 +83,12 @@ pub fn encode<A: Alphabet>(alphabet: A, input: &[u8]) -> String {
     let encoded = digits
         .iter()
         .rev()
-        .map(|digit| alphabet[*digit as usize])
-        .collect();
+        .map(|digit| alphabet.get(*digit as usize));
 
-    String::from_utf8(encoded).expect("Result has to be ASCII")
+    let mut result = String::new();
+    result.extend(encoded);
+
+    result
 }
 
 /// Decode an input vector using the given alphabet.
@@ -98,18 +98,15 @@ pub fn decode<A: Alphabet>(alphabet: A, input: &str) -> Result<Vec<u8>, DecodeEr
     }
 
     let base = alphabet.base() as u16;
-    let alphabet_lut = alphabet.lookup_table();
+    let lookup = alphabet.lookup_table();
 
     let mut bytes: Vec<u8> = vec![0];
 
-    for c in input.as_bytes() {
-        let mut carry = match alphabet_lut[*c as usize] {
-            INVALID_INDEX => return Err(DecodeError),
-            carry => carry,
-        } as u16;
+    for c in input.chars() {
+        let mut carry = lookup.get(c).ok_or(DecodeError)? as u16;
 
         for byte in bytes.iter_mut() {
-            carry += (*byte as u16) * base;
+            carry += base * *byte as u16;
             *byte = carry as u8;
             carry >>= 8;
         }
@@ -120,7 +117,7 @@ pub fn decode<A: Alphabet>(alphabet: A, input: &str) -> Result<Vec<u8>, DecodeEr
         }
     }
 
-    let leader = alphabet.as_bytes()[0];
+    let leader = alphabet.get(0) as u8;
 
     let leaders = input
         .bytes()
@@ -156,10 +153,27 @@ mod test {
             let input = value["string"].as_str().unwrap();
             let alphabet = alphabets[alphabet_name].as_str().unwrap();
 
+            // Alphabet works as unicode
             let decoded = decode(alphabet, input).unwrap();
             let encoded = encode(alphabet, &decoded);
-            println!("'{:?}' - '{:?}'", input, encoded);
+            assert_eq!(encoded, input);
+
+            // Alphabet works as ASCII
+            let decoded = decode(alphabet.as_bytes(), input).unwrap();
+            let encoded = encode(alphabet.as_bytes(), &decoded);
             assert_eq!(encoded, input);
         }
+    }
+
+    #[test]
+    fn is_unicode_sound() {
+        // binary, kinda...
+        let alphabet = "😐😀";
+
+        let encoded = encode(alphabet, &[0xff,0x00,0xff,0x00]);
+        let decoded = decode(alphabet, &encoded).unwrap();
+
+        assert_eq!(encoded, "😀😀😀😀😀😀😀😀😐😐😐😐😐😐😐😐😀😀😀😀😀😀😀😀😐😐😐😐😐😐😐😐");
+        assert_eq!(decoded, &[0xff,0x00,0xff,0x00]);
     }
 }
