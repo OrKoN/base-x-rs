@@ -1,6 +1,27 @@
-/// ! # base_x
-/// !
-/// ! Encode and decode any base alphabet.
+//! # base_x
+//!
+//! Encode and decode any base alphabet.
+//!
+//! ## Installation
+//!
+//! Add this to `Cargo.toml` file:
+//!
+//! ```toml
+//! [dependencies]
+//! base-x = "0.2.0"
+//! ```
+//!
+//! ## Usage
+//!
+//! ```rust
+//! extern crate base_x;
+//!
+//! fn main() {
+//!   let decoded = base_x::decode("01", "11111111000000001111111100000000").unwrap();
+//!   let encoded = base_x::encode("01", &decoded);
+//!  assert_eq!(encoded, "11111111000000001111111100000000");
+//! }
+//! ```
 
 mod alphabet;
 
