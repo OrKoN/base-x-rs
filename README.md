@@ -1,6 +1,6 @@
 # base-x
 
-[![Build Status](http://img.shields.io/travis/OrKoN/base-x-rs.svg?style=flat)](https://travis-ci.org/OrKoN/base-x-rs)
+[![Build Status](https://travis-ci.org/OrKoN/base-x-rs.svg?branch=master)](https://travis-ci.org/OrKoN/base-x-rs)
 
 This is a Rust fork of https://github.com/cryptocoinjs/base-x
 And this my very first Rust project: please review the source code!
