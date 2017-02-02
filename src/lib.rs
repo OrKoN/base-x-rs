@@ -25,7 +25,7 @@
 
 mod alphabet;
 
-pub use alphabet::{Alphabet, CharlookUp};
+pub use alphabet::{Alphabet, CharLookup};
 
 use std::error::Error;
 use std::fmt;

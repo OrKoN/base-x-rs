@@ -3,7 +3,7 @@ use std::collections::HashMap;
 const INVALID_INDEX: u8 = 0xFF;
 
 pub trait Alphabet {
-    type Lookup: CharlookUp;
+    type Lookup: CharLookup;
 
     /// Get a character from Alphabet at index.
     ///
@@ -22,7 +22,7 @@ pub trait Alphabet {
     fn base(&self) -> usize;
 }
 
-pub trait CharlookUp: Sized {
+pub trait CharLookup: Sized {
     /// Get the index of the `char` in the Alphabet. If `char`
     /// is not in the Alphabet return `None`.
     fn get(&self, char) -> Option<usize>;
@@ -98,7 +98,7 @@ impl<'a> Alphabet for &'a str {
     }
 }
 
-impl CharlookUp for [u8; 256] {
+impl CharLookup for [u8; 256] {
     #[inline]
     fn get(&self, byte: char) -> Option<usize> {
         match self[byte as u8 as usize] {
@@ -108,7 +108,7 @@ impl CharlookUp for [u8; 256] {
     }
 }
 
-impl<'a> CharlookUp for &'a [u8; 256] {
+impl<'a> CharLookup for &'a [u8; 256] {
     #[inline]
     fn get(&self, byte: char) -> Option<usize> {
         match self[byte as u8 as usize] {
@@ -118,7 +118,7 @@ impl<'a> CharlookUp for &'a [u8; 256] {
     }
 }
 
-impl CharlookUp for HashMap<char, usize> {
+impl CharLookup for HashMap<char, usize> {
     #[inline]
     fn get(&self, ch: char) -> Option<usize> {
         self.get(&ch).map(|index| *index)
@@ -127,7 +127,7 @@ impl CharlookUp for HashMap<char, usize> {
 
 #[cfg(test)]
 mod test {
-    use super::{Alphabet, CharlookUp};
+    use super::{Alphabet, CharLookup};
     use std::collections::HashMap;
 
     #[test]
@@ -136,13 +136,13 @@ mod test {
 
         let lookup: HashMap<char, usize> = alphabet.lookup_table();
 
-        assert_eq!(CharlookUp::get(&lookup, 'a'), Some(0));
-        assert_eq!(CharlookUp::get(&lookup, 'b'), Some(1));
-        assert_eq!(CharlookUp::get(&lookup, 'c'), Some(2));
-        assert_eq!(CharlookUp::get(&lookup, 'd'), Some(3));
-        assert_eq!(CharlookUp::get(&lookup, 'e'), None);
-        assert_eq!(CharlookUp::get(&lookup, '7'), None);
-        assert_eq!(CharlookUp::get(&lookup, '$'), None);
+        assert_eq!(CharLookup::get(&lookup, 'a'), Some(0));
+        assert_eq!(CharLookup::get(&lookup, 'b'), Some(1));
+        assert_eq!(CharLookup::get(&lookup, 'c'), Some(2));
+        assert_eq!(CharLookup::get(&lookup, 'd'), Some(3));
+        assert_eq!(CharLookup::get(&lookup, 'e'), None);
+        assert_eq!(CharLookup::get(&lookup, '7'), None);
+        assert_eq!(CharLookup::get(&lookup, '$'), None);
     }
 
     #[test]
