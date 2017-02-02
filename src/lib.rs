@@ -2,24 +2,8 @@
 /// !
 /// ! Encode and decode any base alphabet.
 
-use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
-
-#[derive(Debug)]
-pub struct EncodeError;
-
-impl fmt::Display for EncodeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Failed to encode the given data")
-    }
-}
-
-impl Error for EncodeError {
-    fn description(&self) -> &str {
-        "Can not encode the provided data"
-    }
-}
 
 #[derive(Debug)]
 pub struct DecodeError;
@@ -37,35 +21,29 @@ impl Error for DecodeError {
 }
 
 /// Encode an input vector using the given alphabet.
-pub fn encode(alphabet: &str, input: Vec<u16>) -> Result<String, EncodeError> {
+pub fn encode(alphabet: &[u8], input: &[u8]) -> String {
     if input.len() == 0 {
-        return Ok(String::new());
+        return String::new();
     }
 
     let base = alphabet.len() as u16;
-    let mut alphabet_map = HashMap::with_capacity(alphabet.len());
-
-    for (i, c) in alphabet.chars().enumerate() {
-        alphabet_map.insert(i, c);
-    }
 
     let mut digits: Vec<u16> = Vec::with_capacity(input.len());
 
     digits.push(0);
 
-    for c in &input {
-        let mut j = 0;
-        let mut carry = *c;
-        while j < digits.len() {
-            carry = carry + (digits[j] << 8);
-            digits[j] = carry % base;
-            carry = (carry / base) | 0;
-            j += 1;
+    for c in input {
+        let mut carry = *c as u16;
+
+        for digit in digits.iter_mut() {
+            carry += *digit << 8;
+            *digit = carry % base;
+            carry /= base;
         }
 
         while carry > 0 {
             digits.push(carry % base);
-            carry = (carry / base) | 0;
+            carry /= base;
         }
     }
 
@@ -77,50 +55,61 @@ pub fn encode(alphabet: &str, input: Vec<u16>) -> Result<String, EncodeError> {
 
     digits.extend(leaders);
 
-    let mut output = String::new();
+    let encoded = digits
+        .iter()
+        .rev()
+        .map(|digit| alphabet[*digit as usize])
+        .collect();
 
-    for i in (0..digits.len()).rev() {
-        let char = try!(alphabet_map.get(&(digits[i] as usize)).ok_or(EncodeError));
-        output.push(*char)
-    }
-
-    Ok(output)
+    String::from_utf8(encoded).expect("Result has to be ASCII")
 }
 
-/// Deocde an input vector using the given alphabet.
-pub fn decode(alphabet: &str, input: &str) -> Result<Vec<u16>, DecodeError> {
+/// Decode an input vector using the given alphabet.
+pub fn decode(alphabet: &[u8], input: &str) -> Result<Vec<u8>, DecodeError> {
     if input.len() == 0 {
-        return Ok(vec![]);
+        return Ok(Vec::new());
     }
 
     let base = alphabet.len() as u16;
-    let leader = try!(alphabet.chars().nth(0).ok_or(DecodeError));
-    let mut alphabet_map = HashMap::new();
 
-    for (i, c) in alphabet.chars().enumerate() {
-        alphabet_map.insert(c, i as u16);
+    // Alphabet cannot be longer than 255 bytes, so 0xFF is a safe bet for an
+    // invalid index.
+    const INVALID: u8 = 0xFF;
+
+    // Ideally this lookup table would be generated on compile time for
+    // All the alphabets. That said, this should be pretty darn fast anyway.
+    let mut alphabet_lut = [INVALID; 256];
+
+    for (i, byte) in alphabet.iter().enumerate() {
+        alphabet_lut[*byte as usize] = i as u8;
     }
 
-    let mut bytes = vec![0];
-    for c in input.chars() {
-        let carry = try!(alphabet_map.get(&c).ok_or(DecodeError));
-        let mut carry = carry.clone();
-        for b in &mut bytes {
-            carry = carry + *b * base;
-            *b = carry & 0xff;
-            carry = carry >> 8;
+    let mut bytes: Vec<u8> = vec![0];
+
+    for c in input.as_bytes() {
+        let mut carry = match alphabet_lut[*c as usize] {
+            INVALID => return Err(DecodeError),
+            carry => carry,
+        } as u16;
+
+        for byte in bytes.iter_mut() {
+            carry += (*byte as u16) * base;
+            *byte = carry as u8;
+            carry >>= 8;
         }
 
         while carry > 0 {
-            bytes.push(carry & 0xff);
-            carry = carry >> 8;
+            bytes.push(carry as u8);
+            carry >>= 8;
         }
     }
 
-    let leaders = input.chars()
-        .into_iter()
+    let leader = alphabet[0];
+
+    let leaders = input
+        .bytes()
         .take(input.len() - 1)
-        .take_while(|char| *char == leader)
+        .take_while(|byte| *byte == leader)
         .map(|_| 0);
 
     bytes.extend(leaders);
@@ -155,8 +144,8 @@ mod test {
             let input: String = json::decode(&input).unwrap();
             let alphabet = alphabets.get(&alphabet_name).unwrap().to_string();
             let alphabet: String = json::decode(&alphabet).unwrap();
-            let decoded = decode(&alphabet, &input).unwrap();
-            let encoded = encode(&alphabet, decoded).unwrap();
+            let decoded = decode(alphabet.as_bytes(), &input).unwrap();
+            let encoded = encode(alphabet.as_bytes(), &decoded);
             println!("'{:?}' - '{:?}'", input, encoded);
             assert_eq!(encoded, input);
         }
