@@ -100,7 +100,8 @@ pub fn decode<A: Alphabet>(alphabet: A, input: &str) -> Result<Vec<u8>, DecodeEr
     let base = alphabet.base() as u16;
     let lookup = alphabet.lookup_table();
 
-    let mut bytes: Vec<u8> = vec![0];
+    let mut bytes = Vec::with_capacity(input.len());
+    bytes.push(0u8);
 
     for c in input.chars() {
         let mut carry = lookup.get(c).ok_or(DecodeError)? as u16;

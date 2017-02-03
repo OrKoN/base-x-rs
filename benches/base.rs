@@ -4,7 +4,7 @@ extern crate rand;
 extern crate base_x;
 
 use bencher::Bencher;
-use base_x::{encode, decode};
+use base_x::{encode, decode, Alphabet};
 
 
 fn random_input(size: usize) -> Vec<u8> {
@@ -17,31 +17,91 @@ fn random_input(size: usize) -> Vec<u8> {
     v
 }
 
-fn decode_encode(bench: &mut Bencher, alph: &'static str) {
+fn test_decode<A: Alphabet + Copy>(bench: &mut Bencher, alph: A) {
+    let input = random_input(100);
+    let out = encode(alph, &input);
+
+    bench.iter(|| {
+        decode(alph, &out).unwrap()
+    });
+}
+
+fn test_encode<A: Alphabet + Copy>(bench: &mut Bencher, alph: A) {
     let input = random_input(100);
 
     bench.iter(|| {
-        let out = encode(alph, &input);
-        decode(alph, &out).unwrap()
-    })
+        encode(alph, &input)
+    });
 }
 
 // Actual benchmarks
 
-fn base2(bench: &mut Bencher) {
+// Encode UTF-8
+fn encode_base2_utf8(bench: &mut Bencher) {
     const ALPH: &'static str = "01";
-    decode_encode(bench, ALPH);
+    test_encode(bench, ALPH);
 }
 
-fn base16(bench: &mut Bencher) {
+fn encode_base16_utf8(bench: &mut Bencher) {
     const ALPH: &'static str = "0123456789abcdef";
-    decode_encode(bench, ALPH);
+    test_encode(bench, ALPH);
 }
 
-fn base58(bench: &mut Bencher) {
+fn encode_base58_utf8(bench: &mut Bencher) {
     const ALPH: &'static str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-    decode_encode(bench, ALPH);
+    test_encode(bench, ALPH);
 }
 
-benchmark_group!(benches, base2, base16, base58);
+// Encode ASCII
+fn encode_base2_ascii(bench: &mut Bencher) {
+    const ALPH: &'static [u8] = b"01";
+    test_encode(bench, ALPH);
+}
+
+fn encode_base16_ascii(bench: &mut Bencher) {
+    const ALPH: &'static [u8] = b"0123456789abcdef";
+    test_encode(bench, ALPH);
+}
+
+fn encode_base58_ascii(bench: &mut Bencher) {
+    const ALPH: &'static [u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    test_encode(bench, ALPH);
+}
+
+// Decode UTF-8
+fn decode_base2_utf8(bench: &mut Bencher) {
+    const ALPH: &'static str = "01";
+    test_decode(bench, ALPH);
+}
+
+fn decode_base16_utf8(bench: &mut Bencher) {
+    const ALPH: &'static str = "0123456789abcdef";
+    test_decode(bench, ALPH);
+}
+
+fn decode_base58_utf8(bench: &mut Bencher) {
+    const ALPH: &'static str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    test_decode(bench, ALPH);
+}
+
+// Decode ASCII
+fn decode_base2_ascii(bench: &mut Bencher) {
+    const ALPH: &'static [u8] = b"01";
+    test_decode(bench, ALPH);
+}
+
+fn decode_base16_ascii(bench: &mut Bencher) {
+    const ALPH: &'static [u8] = b"0123456789abcdef";
+    test_decode(bench, ALPH);
+}
+
+fn decode_base58_ascii(bench: &mut Bencher) {
+    const ALPH: &'static [u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    test_decode(bench, ALPH);
+}
+
+benchmark_group!(benches,
+    encode_base2_ascii, encode_base2_utf8, encode_base16_ascii, encode_base16_utf8, encode_base58_ascii, encode_base58_utf8,
+    decode_base2_ascii, decode_base2_utf8, decode_base16_ascii, decode_base16_utf8, decode_base58_ascii, decode_base58_utf8
+);
 benchmark_main!(benches);
