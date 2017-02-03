@@ -31,12 +31,12 @@ pub trait CharLookup: Sized {
 impl<'a> Alphabet for &'a [u8] {
     type Lookup = [u8; 256];
 
-    #[inline]
+    #[inline(always)]
     fn get(&self, index: usize) -> char {
         self[index] as char
     }
 
-    #[inline]
+    #[inline(always)]
     fn as_bytes(&self) -> &[u8] {
         *self
     }
@@ -48,7 +48,7 @@ impl<'a> Alphabet for &'a [u8] {
     /// runtime, and recalculate it every time encoding is invoked.
     /// Ideally a custom implementation of the `Alphabet` would return
     /// a `&'static` precalculated table here.
-    #[inline]
+    #[inline(always)]
     fn lookup_table(&self) -> Self::Lookup {
         let mut lookup = [INVALID_INDEX; 256];
 
@@ -59,7 +59,7 @@ impl<'a> Alphabet for &'a [u8] {
         lookup
     }
 
-    #[inline]
+    #[inline(always)]
     fn base(&self) -> usize {
         self.len()
     }
@@ -68,18 +68,18 @@ impl<'a> Alphabet for &'a [u8] {
 impl<'a> Alphabet for &'a str {
     type Lookup = HashMap<char, usize>;
 
-    #[inline]
+    #[inline(always)]
     fn get(&self, index: usize) -> char {
         self.chars().nth(index).expect("Index will be % base, ergo in alphabet range; qed")
     }
 
-    #[inline]
+    #[inline(always)]
     fn as_bytes(&self) -> &[u8] {
         self.as_ref()
     }
 
     /// Produces the hashmap matching any `char` to it's index in alphabet.
-    #[inline]
+    #[inline(always)]
     fn lookup_table(&self) -> Self::Lookup {
         // this is byte-length, which might or might not be enough,
         // we might suffer a reallocation at some point.
@@ -92,14 +92,14 @@ impl<'a> Alphabet for &'a str {
         map
     }
 
-    #[inline]
+    #[inline(always)]
     fn base(&self) -> usize {
         self.chars().count()
     }
 }
 
 impl CharLookup for [u8; 256] {
-    #[inline]
+    #[inline(always)]
     fn get(&self, byte: char) -> Option<usize> {
         match self[byte as u8 as usize] {
             INVALID_INDEX => None,
@@ -109,7 +109,7 @@ impl CharLookup for [u8; 256] {
 }
 
 impl<'a> CharLookup for &'a [u8; 256] {
-    #[inline]
+    #[inline(always)]
     fn get(&self, byte: char) -> Option<usize> {
         match self[byte as u8 as usize] {
             INVALID_INDEX => None,
@@ -119,7 +119,7 @@ impl<'a> CharLookup for &'a [u8; 256] {
 }
 
 impl CharLookup for HashMap<char, usize> {
-    #[inline]
+    #[inline(always)]
     fn get(&self, ch: char) -> Option<usize> {
         self.get(&ch).map(|index| *index)
     }
