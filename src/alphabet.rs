@@ -88,39 +88,3 @@ impl<'a> Alphabet for &'a str {
         Utf8Decoder::decode(&alphabet, map, input)
     }
 }
-
-// #[cfg(test)]
-// mod test {
-//     use super::{Alphabet, CharLookup};
-//     use std::collections::HashMap;
-
-//     #[test]
-//     fn lookup_str() {
-//         let alphabet = "abcd";
-
-//         let lookup: HashMap<char, usize> = alphabet.lookup_table();
-
-//         assert_eq!(CharLookup::get(&lookup, 'a'), Some(0));
-//         assert_eq!(CharLookup::get(&lookup, 'b'), Some(1));
-//         assert_eq!(CharLookup::get(&lookup, 'c'), Some(2));
-//         assert_eq!(CharLookup::get(&lookup, 'd'), Some(3));
-//         assert_eq!(CharLookup::get(&lookup, 'e'), None);
-//         assert_eq!(CharLookup::get(&lookup, '7'), None);
-//         assert_eq!(CharLookup::get(&lookup, '$'), None);
-//     }
-
-//     #[test]
-//     fn lookup_bytes() {
-//         let alphabet: &[u8] = b"qwer";
-
-//         let lookup: [u8; 256] = alphabet.lookup_table();
-
-//         assert_eq!(lookup.get('q'), Some(0));
-//         assert_eq!(lookup.get('w'), Some(1));
-//         assert_eq!(lookup.get('e'), Some(2));
-//         assert_eq!(lookup.get('r'), Some(3));
-//         assert_eq!(lookup.get('t'), None);
-//         assert_eq!(lookup.get('*'), None);
-//         assert_eq!(lookup.get('_'), None);
-//     }
-// }
