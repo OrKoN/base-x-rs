@@ -26,6 +26,66 @@ pub trait Alphabet {
     fn base(&self) -> usize;
 }
 
+#[derive(Clone, Copy)]
+pub struct Binary;
+
+impl Alphabet for Binary {
+    type Lookup = [u8; 256];
+
+    #[inline(always)]
+    fn encode(&self, input: &[u8]) -> String {
+        let cap = input.len() * 8;
+        let mut out = Vec::with_capacity(cap);
+
+        unsafe {
+            out.set_len(cap);
+
+            let ptr = out.as_mut_ptr();
+            let mut i = 0isize;
+
+            for byte in input {
+                *ptr.offset(i)     = (*byte >> 7) + 0x30;
+                *ptr.offset(i + 1) = ((*byte >> 6) & 1) + 0x30;
+                *ptr.offset(i + 2) = ((*byte >> 5) & 1) + 0x30;
+                *ptr.offset(i + 3) = ((*byte >> 4) & 1) + 0x30;
+                *ptr.offset(i + 4) = ((*byte >> 3) & 1) + 0x30;
+                *ptr.offset(i + 5) = ((*byte >> 2) & 1) + 0x30;
+                *ptr.offset(i + 6) = ((*byte >> 1) & 1) + 0x30;
+                *ptr.offset(i + 7) = (*byte & 1) + 0x30;
+                i += 8;
+            }
+
+            String::from_utf8_unchecked(out)
+        }
+    }
+
+    #[inline(always)]
+    fn get(&self, index: usize) -> char {
+        index as u8 as char
+    }
+
+    #[inline(always)]
+    fn as_bytes(&self) -> &[u8] {
+        b"01"
+    }
+
+    #[inline(always)]
+    fn lookup_table(&self) -> Self::Lookup {
+        let mut lookup = [INVALID_INDEX; 256];
+
+        for (i, byte) in self.as_bytes().iter().enumerate() {
+            lookup[*byte as usize] = i as u8;
+        }
+
+        lookup
+    }
+
+    #[inline(always)]
+    fn base(&self) -> usize {
+        2
+    }
+}
+
 pub trait CharLookup: Sized {
     /// Get the index of the `char` in the Alphabet. If `char`
     /// is not in the Alphabet return `None`.

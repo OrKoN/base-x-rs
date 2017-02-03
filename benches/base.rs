@@ -4,6 +4,7 @@ extern crate rand;
 extern crate base_x;
 
 use bencher::Bencher;
+use base_x::alphabet::Binary;
 use base_x::{encode, decode, Alphabet};
 
 
@@ -18,7 +19,7 @@ fn random_input(size: usize) -> Vec<u8> {
 }
 
 fn test_decode<A: Alphabet + Copy>(bench: &mut Bencher, alph: A) {
-    let input = random_input(100);
+    let input = random_input(32);
     let out = encode(alph, &input);
 
     bench.iter(|| {
@@ -27,7 +28,7 @@ fn test_decode<A: Alphabet + Copy>(bench: &mut Bencher, alph: A) {
 }
 
 fn test_encode<A: Alphabet + Copy>(bench: &mut Bencher, alph: A) {
-    let input = random_input(100);
+    let input = random_input(32);
 
     bench.iter(|| {
         encode(alph, &input)
@@ -35,6 +36,10 @@ fn test_encode<A: Alphabet + Copy>(bench: &mut Bencher, alph: A) {
 }
 
 // Actual benchmarks
+
+fn encode_base2_spec(bench: &mut Bencher) {
+    test_encode(bench, Binary);
+}
 
 // Encode UTF-8
 fn encode_base2_utf8(bench: &mut Bencher) {
@@ -101,7 +106,10 @@ fn decode_base58_ascii(bench: &mut Bencher) {
 }
 
 benchmark_group!(benches,
-    encode_base2_ascii, encode_base2_utf8, encode_base16_ascii, encode_base16_utf8, encode_base58_ascii, encode_base58_utf8,
-    decode_base2_ascii, decode_base2_utf8, decode_base16_ascii, decode_base16_utf8, decode_base58_ascii, decode_base58_utf8
+    encode_base2_spec,
+    encode_base2_ascii, encode_base2_utf8, encode_base16_ascii,
+    decode_base2_ascii, decode_base2_utf8, decode_base16_ascii,
+    encode_base16_utf8, encode_base58_ascii, encode_base58_utf8,
+    decode_base16_utf8, decode_base58_ascii, decode_base58_utf8
 );
 benchmark_main!(benches);

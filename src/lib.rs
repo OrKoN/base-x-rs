@@ -23,8 +23,8 @@
 //! }
 //! ```
 
-mod encoder;
-mod alphabet;
+pub mod encoder;
+pub mod alphabet;
 
 pub use encoder::{AsciiEncoder, Utf8Encoder};
 pub use alphabet::{Alphabet, CharLookup};
