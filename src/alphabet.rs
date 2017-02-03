@@ -1,9 +1,13 @@
 use std::collections::HashMap;
 
+use encoder::{AsciiEncoder, Utf8Encoder};
+
 const INVALID_INDEX: u8 = 0xFF;
 
 pub trait Alphabet {
     type Lookup: CharLookup;
+
+    fn encode(&self, input: &[u8]) -> String;
 
     /// Get a character from Alphabet at index.
     ///
@@ -30,6 +34,11 @@ pub trait CharLookup: Sized {
 
 impl<'a> Alphabet for &'a [u8] {
     type Lookup = [u8; 256];
+
+    #[inline(always)]
+    fn encode(&self, input: &[u8]) -> String {
+        AsciiEncoder::encode(*self, input)
+    }
 
     #[inline(always)]
     fn get(&self, index: usize) -> char {
@@ -67,6 +76,12 @@ impl<'a> Alphabet for &'a [u8] {
 
 impl<'a> Alphabet for &'a str {
     type Lookup = HashMap<char, usize>;
+
+    #[inline(always)]
+    fn encode(&self, input: &[u8]) -> String {
+        let alphabet: Vec<char> = self.chars().collect();
+        Utf8Encoder::encode(&alphabet, input)
+    }
 
     #[inline(always)]
     fn get(&self, index: usize) -> char {
