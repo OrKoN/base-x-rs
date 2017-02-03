@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use DecodeError;
 
 pub struct AsciiDecoder;
@@ -57,7 +55,11 @@ impl AsciiDecoder {
 
 impl Utf8Decoder {
     #[inline(always)]
-    pub fn decode(alphabet: &[char], lookup: HashMap<char, usize>, input: &str) -> Result<Vec<u8>, DecodeError> {
-        decode!(alphabet, input, chars, c => *lookup.get(&c).ok_or(DecodeError)?)
+    pub fn decode(alphabet: &[char], input: &str) -> Result<Vec<u8>, DecodeError> {
+        decode!(alphabet, input, chars, c => alphabet.iter()
+                                                    .enumerate()
+                                                    .find(|&(_, ch)| *ch == c)
+                                                    .map(|(i, _)| i)
+                                                    .ok_or(DecodeError)?)
     }
 }
