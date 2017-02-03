@@ -19,7 +19,7 @@ fn random_input(size: usize) -> Vec<u8> {
 }
 
 fn test_decode<A: Alphabet + Copy>(bench: &mut Bencher, alph: A) {
-    let input = random_input(32);
+    let input = random_input(100);
     let out = encode(alph, &input);
 
     bench.iter(|| {
@@ -28,7 +28,7 @@ fn test_decode<A: Alphabet + Copy>(bench: &mut Bencher, alph: A) {
 }
 
 fn test_encode<A: Alphabet + Copy>(bench: &mut Bencher, alph: A) {
-    let input = random_input(32);
+    let input = random_input(100);
 
     bench.iter(|| {
         encode(alph, &input)

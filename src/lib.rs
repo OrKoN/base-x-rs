@@ -23,11 +23,13 @@
 //! }
 //! ```
 
+pub mod decoder;
 pub mod encoder;
 pub mod alphabet;
 
+pub use decoder::{AsciiDecoder, Utf8Decoder};
 pub use encoder::{AsciiEncoder, Utf8Encoder};
-pub use alphabet::{Alphabet, CharLookup};
+pub use alphabet::Alphabet;
 
 use std::error::Error;
 use std::fmt;
@@ -54,42 +56,7 @@ pub fn encode<A: Alphabet>(alphabet: A, input: &[u8]) -> String {
 
 /// Decode an input vector using the given alphabet.
 pub fn decode<A: Alphabet>(alphabet: A, input: &str) -> Result<Vec<u8>, DecodeError> {
-    if input.len() == 0 {
-        return Ok(Vec::new());
-    }
-
-    let base = alphabet.base() as u16;
-    let lookup = alphabet.lookup_table();
-
-    let mut bytes = Vec::with_capacity(input.len());
-    bytes.push(0u8);
-
-    for c in input.chars() {
-        let mut carry = lookup.get(c).ok_or(DecodeError)? as u16;
-
-        for byte in bytes.iter_mut() {
-            carry += base * *byte as u16;
-            *byte = carry as u8;
-            carry >>= 8;
-        }
-
-        while carry > 0 {
-            bytes.push(carry as u8);
-            carry >>= 8;
-        }
-    }
-
-    let leader = alphabet.get(0) as u8;
-
-    let leaders = input
-        .bytes()
-        .take(input.len() - 1)
-        .take_while(|byte| *byte == leader)
-        .map(|_| 0);
-
-    bytes.extend(leaders);
-    bytes.reverse();
-    Ok(bytes)
+    alphabet.decode(input)
 }
 
 #[cfg(test)]
