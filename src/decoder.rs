@@ -46,20 +46,32 @@ macro_rules! decode {
 impl AsciiDecoder {
     #[inline(always)]
     pub fn decode(alphabet: &[u8], lookup: [u8; 256], input: &str) -> Result<Vec<u8>, DecodeError> {
-        decode!(alphabet, input, bytes, c => match lookup[c as usize] {
-            0xFF => return Err(DecodeError),
-            index => index
-        })
+        decode!(
+            alphabet,
+            input,
+            bytes,
+            c => match lookup[c as usize] {
+                0xFF => return Err(DecodeError),
+                index => index
+            }
+        )
     }
 }
 
 impl Utf8Decoder {
     #[inline(always)]
     pub fn decode(alphabet: &[char], input: &str) -> Result<Vec<u8>, DecodeError> {
-        decode!(alphabet, input, chars, c => alphabet.iter()
-                                                    .enumerate()
-                                                    .find(|&(_, ch)| *ch == c)
-                                                    .map(|(i, _)| i)
-                                                    .ok_or(DecodeError)?)
+        decode!(
+            alphabet,
+            input,
+            chars,
+            // Vector find is faster than HashMap even for Base58
+            c => alphabet
+                .iter()
+                .enumerate()
+                .find(|&(_, ch)| *ch == c)
+                .map(|(i, _)| i)
+                .ok_or(DecodeError)?
+        )
     }
 }
