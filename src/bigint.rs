@@ -33,6 +33,31 @@ impl BigUint {
         carry as u32
     }
 
+    #[inline(always)]
+    pub fn add_mul(&mut self, addition: u32, multiplicator: u32) {
+        let mut carry = 0u64;
+
+        {
+            let mut iter = self.chunks.iter_mut().rev();
+
+            if let Some(chunk) = iter.next() {
+                carry = (*chunk as u64 * multiplicator as u64) + addition as u64;
+                *chunk = carry as u32;
+                carry >>= 32;
+            }
+
+            for chunk in iter {
+                carry = (carry + *chunk as u64) * multiplicator as u64;
+                *chunk = carry as u32;
+                carry >>= 32;
+            }
+        }
+
+        if carry > 0 {
+            self.chunks.insert(0, carry as u32);
+        }
+    }
+
     /// Check if self is zero.
     #[inline(always)]
     pub fn is_zero(&self) -> bool {
@@ -51,13 +76,15 @@ impl<'a> From<&'a [u8]> for BigUint {
 
         unsafe {
             chunks.set_len(len);
-            *chunks.get_unchecked_mut(0) = 0u32;
 
-            ptr::copy_nonoverlapping(
-                bytes.as_ptr(),
-                (chunks.as_mut_ptr() as *mut u8).offset(modulo as isize),
-                bytes.len()
-            );
+            let mut chunks_ptr = chunks.as_mut_ptr() as *mut u8;
+
+            if modulo > 0 {
+                *chunks.get_unchecked_mut(0) = 0u32;
+                chunks_ptr = chunks_ptr.offset(4 - modulo as isize);
+            }
+
+            ptr::copy_nonoverlapping(bytes.as_ptr(), chunks_ptr, bytes.len());
         }
 
         for chunk in chunks.iter_mut() {
