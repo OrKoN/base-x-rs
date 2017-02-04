@@ -20,10 +20,21 @@ impl BigUint {
     pub fn rem_div(&mut self, divider: u32) -> u32 {
         let mut carry = 0u64;
 
+        let mut pop = 0;
+
         for chunk in self.chunks.iter_mut() {
             carry = (carry << 32) | *chunk as u64;
             *chunk = (carry / divider as u64) as u32;
             carry %= divider as u64;
+
+            if *chunk == 0 {
+                pop += 1;
+            }
+        }
+
+        // TODO: Do this without a loop (might need unsafe)
+        for _ in 0..pop {
+            self.chunks.remove(0);
         }
 
         carry as u32
