@@ -12,7 +12,7 @@ macro_rules! encode {
         let base = $alpha.len() as u32;
 
         // Convert the input byte array to a BigUint
-        let mut big = BigUint::from($input);
+        let mut big = BigUint::from_bytes_be($input);
         let mut out = Vec::with_capacity($input.len());
 
         // Find the highest power of `base` that fits in `u32`

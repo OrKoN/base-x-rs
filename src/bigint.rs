@@ -15,6 +15,17 @@ pub struct BigUint {
 }
 
 impl BigUint {
+    #[inline(always)]
+    pub fn with_capacity(capacity: usize) -> Self {
+        let mut chunks = Vec::with_capacity(capacity);
+
+        chunks.push(0);
+
+        BigUint {
+            chunks: chunks
+        }
+    }
+
     /// Divide self by `divider`, return the remainder of the operation.
     #[inline(always)]
     pub fn rem_div(&mut self, divider: u32) -> u32 {
@@ -26,7 +37,7 @@ impl BigUint {
             carry %= divider as u64;
         }
 
-        if self.chunks[0] == 0 {
+        if self.chunks[0] == 0 && self.chunks.len() > 0 {
             self.chunks.remove(0);
         }
 
@@ -47,7 +58,7 @@ impl BigUint {
             }
 
             for chunk in iter {
-                carry = (carry + *chunk as u64) * multiplicator as u64;
+                carry += *chunk as u64 * multiplicator as u64;
                 *chunk = carry as u32;
                 carry >>= 32;
             }
@@ -63,11 +74,43 @@ impl BigUint {
     pub fn is_zero(&self) -> bool {
         self.chunks.iter().all(|chunk| *chunk == 0)
     }
-}
 
-impl<'a> From<&'a [u8]> for BigUint {
+    pub fn into_bytes_be(mut self) -> Vec<u8> {
+        let mut skip = 0;
+
+        for chunk in self.chunks.iter() {
+            if *chunk != 0 {
+                skip += chunk.leading_zeros() / 8;
+                break;
+            }
+
+            skip += 4;
+        }
+
+        let len = self.chunks.len() * 4 - skip as usize;
+
+        if len == 0 {
+            return Vec::new();
+        }
+
+        for chunk in self.chunks.iter_mut() {
+            *chunk = u32::to_be(*chunk);
+        }
+
+        unsafe {
+            let mut bytes = Vec::with_capacity(len);
+            bytes.set_len(len);
+
+            let chunks_ptr = (self.chunks.as_ptr() as *const u8).offset(skip as isize);
+
+            ptr::copy_nonoverlapping(chunks_ptr, bytes.as_mut_ptr(), len);
+
+            bytes
+        }
+    }
+
     #[inline]
-    fn from(bytes: &[u8]) -> Self {
+    pub fn from_bytes_be(bytes: &[u8]) -> Self {
         let modulo = bytes.len() % 4;
 
         let len = bytes.len() / 4 + (modulo > 0) as usize;
@@ -108,7 +151,7 @@ mod tests {
             0x37,0xAD,0x00,0x00,0x00,0x00,0xDE,0xAD,
         ];
 
-        let big = BigUint::from(bytes);
+        let big = BigUint::from_bytes_be(bytes);
 
         assert_eq!(big.chunks, vec![0x0000DEAD, 0x00000013, 0x37AD0000, 0x0000DEAD]);
     }
