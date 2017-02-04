@@ -10,13 +10,22 @@ macro_rules! encode {
         }
 
         let base = $alpha.len() as u32;
-        let big_pow = 32 / (32 - base.leading_zeros());
-        let big_base = base.pow(big_pow);
 
+        // Convert the input byte array to a BigUint
         let mut big = BigUint::from($input);
         let mut out = Vec::with_capacity($input.len());
 
-        'big: loop {
+        // Find the highest power of `base` that fits in `u32`
+        let big_pow = 32 / (32 - base.leading_zeros());
+        let big_base = base.pow(big_pow);
+
+        'fast: loop {
+            // Instead of diving by `base`, we divide by the `big_base`,
+            // giving us a bigger remainder that we can further subdivide
+            // by the original `base`. This greatly (in case of base58 it's
+            // a factor of 5) reduces the amount of divisions that need to
+            // be done on BigUint, delegating the hard work to regular `u32`
+            // operations, which are blazing fast.
             let mut big_rem = big.rem_div(big_base);
 
             if big.is_zero() {
@@ -25,7 +34,7 @@ macro_rules! encode {
                     big_rem /= base;
 
                     if big_rem == 0 {
-                        break 'big;
+                        break 'fast; // teehee
                     }
                 }
             } else {

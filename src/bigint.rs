@@ -1,53 +1,48 @@
-use std::{ops, mem, ptr, u32};
+use std::{mem, ptr, u32};
 
-const MASK_BASE: u32 = 0xFFFFFFFF;
-
+/// This is a pretty naive implementation of a BigUint abstracting all
+/// math out to a vector of `u32` chunks.
+///
+/// It can only do 3 things:
+/// - Be instantiated from an arbitrary byte slice
+/// - Do a division by `u32`, mutating self and returning the remainder.
+/// - Check if it's zero.
+///
+/// Turns out those are all the operations you need to encode base58,
+/// or anything else, really.
 pub struct BigUint {
     pub chunks: Vec<u32>
 }
 
-impl ops::ShrAssign<u8> for BigUint {
-    #[inline(always)]
-    fn shr_assign(&mut self, shift: u8) {
-        let mut carry = 0u32;
-        let unshift = 32 - shift;
-        let mask = MASK_BASE >> unshift;
-
-        for chunk in self.chunks.iter_mut() {
-            let new_carry = (*chunk & mask) << unshift;
-            *chunk >>= shift;
-            *chunk |= carry;
-            carry = new_carry;
-        }
-    }
-}
-
 impl BigUint {
+    /// Divide self by `divider`, return the remainder of the operation.
     #[inline(always)]
     pub fn rem_div(&mut self, divider: u32) -> u32 {
         let mut carry = 0u64;
-        let divider = divider as u64;
 
         for chunk in self.chunks.iter_mut() {
             carry = (carry << 32) | *chunk as u64;
-            *chunk = (carry / divider) as u32;
-            carry %= divider;
+            *chunk = (carry / divider as u64) as u32;
+            carry %= divider as u64;
         }
 
         carry as u32
     }
 
+    /// Check if self is zero.
     #[inline(always)]
     pub fn is_zero(&self) -> bool {
         self.chunks.iter().all(|chunk| *chunk == 0)
     }
 }
 
+/// Helper function for transmuting 4 bytes into a chunk.
 #[inline(always)]
 fn bytes_to_u32(bytes: [u8; 4]) -> u32 {
     u32::from_be(unsafe { mem::transmute(bytes) })
 }
 
+/// Helper function for transmuting a slice into a chunk.
 #[inline(always)]
 fn slice_to_u32(slice: &[u8]) -> u32 {
     debug_assert!(slice.len() == 4);
@@ -112,17 +107,6 @@ mod tests {
         let big = BigUint::from(bytes);
 
         assert_eq!(big.chunks, vec![0x0000DEAD, 0x00000013, 0x37AD0000, 0x0000DEAD]);
-    }
-
-    #[test]
-    fn big_uint_shr() {
-        let mut big = BigUint {
-            chunks: vec![0x0000DEAD,0x00000013, 0x37AD0000, 0x0000DEAD]
-        };
-
-        big >>= 8;
-
-        assert_eq!(big.chunks, vec![0x000000DE, 0xAD000000, 0x1337AD00, 0x000000DE]);
     }
 
     #[test]
