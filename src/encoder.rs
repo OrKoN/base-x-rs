@@ -16,7 +16,7 @@ macro_rules! encode {
         let mut big = BigUint::from($input);
         let mut out = Vec::with_capacity($input.len());
 
-        loop {
+        'big: loop {
             let mut big_rem = big.rem_div(big_base);
 
             if big.is_zero() {
@@ -25,10 +25,9 @@ macro_rules! encode {
                     big_rem /= base;
 
                     if big_rem == 0 {
-                        break;
+                        break 'big;
                     }
                 }
-                break;
             } else {
                 for _ in 0..big_pow {
                     out.push($alpha[(big_rem % base) as usize]);
