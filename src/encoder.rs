@@ -10,15 +10,30 @@ macro_rules! encode {
         }
 
         let base = $alpha.len() as u32;
+        let big_pow = 32 / (32 - base.leading_zeros());
+        let big_base = base.pow(big_pow);
 
         let mut big = BigUint::from($input);
         let mut out = Vec::with_capacity($input.len());
 
         loop {
-            out.push($alpha[big.rem_div(base) as usize]);
+            let mut big_rem = big.rem_div(big_base);
 
             if big.is_zero() {
+                loop {
+                    out.push($alpha[(big_rem % base) as usize]);
+                    big_rem /= base;
+
+                    if big_rem == 0 {
+                        break;
+                    }
+                }
                 break;
+            } else {
+                for _ in 0..big_pow {
+                    out.push($alpha[(big_rem % base) as usize]);
+                    big_rem /= base;
+                }
             }
         }
 
