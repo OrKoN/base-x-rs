@@ -14,9 +14,12 @@ macro_rules! encode {
         let mut big = BigUint::from($input);
         let mut out = Vec::with_capacity($input.len());
 
-        while !big.is_zero() {
-            out.push($alpha[big.rem(base) as usize]);
-            big /= base;
+        loop {
+            out.push($alpha[big.rem_div(base) as usize]);
+
+            if big.is_zero() {
+                break;
+            }
         }
 
         let leaders = $input

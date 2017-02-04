@@ -22,23 +22,19 @@ impl ops::ShrAssign<u8> for BigUint {
     }
 }
 
-impl ops::DivAssign<u32> for BigUint {
-    #[inline(always)]
-    fn div_assign(&mut self, divider: u32) {
-        let mut carry = 0u64;
-
-        for chunk in self.chunks.iter_mut() {
-            carry |= *chunk as u64;
-            *chunk = (carry / divider as u64) as u32;
-            carry = (carry % divider as u64) << 32;
-        }
-    }
-}
-
 impl BigUint {
     #[inline(always)]
-    pub fn rem(&self, divider: u32) -> u32 {
-        self.chunks.last().unwrap() % divider
+    pub fn rem_div(&mut self, divider: u32) -> u32 {
+        let mut carry = 0u64;
+        let divider = divider as u64;
+
+        for chunk in self.chunks.iter_mut() {
+            carry = (carry << 32) | *chunk as u64;
+            *chunk = (carry / divider) as u32;
+            carry %= divider;
+        }
+
+        carry as u32
     }
 
     #[inline(always)]
@@ -130,24 +126,15 @@ mod tests {
     }
 
     #[test]
-    fn big_uint_rem() {
-        let big = BigUint {
-            chunks: vec![1337]
-        };
-
-        assert_eq!(big.rem(100), 37);
-    }
-
-    #[test]
-    fn big_uint_div() {
+    fn big_uint_rem_div() {
         let mut big = BigUint {
             chunks: vec![0x136AD712,0x84322759]
         };
 
-        big /= 58;
-
+        let rem = big.rem_div(58);
         let merged = ((big.chunks[0] as u64) << 32) | big.chunks[1] as u64;
 
         assert_eq!(merged, 0x136AD71284322759 / 58);
+        assert_eq!(rem as u64, 0x136AD71284322759 % 58);
     }
 }
