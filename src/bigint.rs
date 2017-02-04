@@ -1,4 +1,4 @@
-use std::{mem, ptr, u32};
+use std::{ptr, u32};
 
 /// This is a pretty naive implementation of a BigUint abstracting all
 /// math out to a vector of `u32` chunks.
@@ -20,20 +20,13 @@ impl BigUint {
     pub fn rem_div(&mut self, divider: u32) -> u32 {
         let mut carry = 0u64;
 
-        let mut pop = 0;
-
         for chunk in self.chunks.iter_mut() {
             carry = (carry << 32) | *chunk as u64;
             *chunk = (carry / divider as u64) as u32;
             carry %= divider as u64;
-
-            if *chunk == 0 {
-                pop += 1;
-            }
         }
 
-        // TODO: Do this without a loop (might need unsafe)
-        for _ in 0..pop {
+        if self.chunks[0] == 0 {
             self.chunks.remove(0);
         }
 
@@ -47,55 +40,28 @@ impl BigUint {
     }
 }
 
-/// Helper function for transmuting 4 bytes into a chunk.
-#[inline(always)]
-fn bytes_to_u32(bytes: [u8; 4]) -> u32 {
-    u32::from_be(unsafe { mem::transmute(bytes) })
-}
-
-/// Helper function for transmuting a slice into a chunk.
-#[inline(always)]
-fn slice_to_u32(slice: &[u8]) -> u32 {
-    debug_assert!(slice.len() == 4);
-
-    unsafe {
-        let mut bytes: [u8; 4] = mem::uninitialized();
-
-        ptr::copy_nonoverlapping(
-            slice.as_ptr(),
-            bytes.as_mut_ptr(),
-            4
-        );
-
-        bytes_to_u32(bytes)
-    }
-}
-
 impl<'a> From<&'a [u8]> for BigUint {
     #[inline]
-    fn from(mut bytes: &[u8]) -> Self {
+    fn from(bytes: &[u8]) -> Self {
         let modulo = bytes.len() % 4;
 
-        let mut chunks = Vec::new();
+        let len = bytes.len() / 4 + (modulo > 0) as usize;
 
-        if modulo > 0 {
-            chunks.reserve(bytes.len() / 4 + 1);
+        let mut chunks = Vec::with_capacity(len);
 
-            let mut first = [0u8; 4];
+        unsafe {
+            chunks.set_len(len);
+            *chunks.get_unchecked_mut(0) = 0u32;
 
-            for (r, w) in bytes[..modulo].iter().zip(first[4-modulo..].iter_mut()) {
-                *w = *r;
-            }
-
-            bytes = &bytes[modulo..];
-
-            chunks.push(bytes_to_u32(first));
-        } else {
-            chunks.reserve(bytes.len() / 4);
+            ptr::copy_nonoverlapping(
+                bytes.as_ptr(),
+                (chunks.as_mut_ptr() as *mut u8).offset(modulo as isize),
+                bytes.len()
+            );
         }
 
-        for slice in bytes.chunks(4) {
-            chunks.push(slice_to_u32(slice))
+        for chunk in chunks.iter_mut() {
+            *chunk = u32::from_be(*chunk);
         }
 
         BigUint {
