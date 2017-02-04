@@ -3,19 +3,21 @@ use std::{ptr, u32};
 /// This is a pretty naive implementation of a BigUint abstracting all
 /// math out to a vector of `u32` chunks.
 ///
-/// It can only do 3 things:
-/// - Be instantiated from an arbitrary byte slice
+/// It can only do a few things:
+/// - Be instantiated from an arbitrary big-endian byte slice
+/// - Be converted to a vector of big-endian bytes.
 /// - Do a division by `u32`, mutating self and returning the remainder.
+/// - Do a multiplication with addition in one pass.
 /// - Check if it's zero.
 ///
-/// Turns out those are all the operations you need to encode base58,
-/// or anything else, really.
+/// Turns out those are all the operations you need to encode and decode
+/// base58, or anything else, really.
 pub struct BigUint {
     pub chunks: Vec<u32>
 }
 
 impl BigUint {
-    #[inline(always)]
+    #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         let mut chunks = Vec::with_capacity(capacity);
 
@@ -27,8 +29,8 @@ impl BigUint {
     }
 
     /// Divide self by `divider`, return the remainder of the operation.
-    #[inline(always)]
-    pub fn rem_div(&mut self, divider: u32) -> u32 {
+    #[inline]
+    pub fn div_mod(&mut self, divider: u32) -> u32 {
         let mut carry = 0u64;
 
         for chunk in self.chunks.iter_mut() {
@@ -44,8 +46,12 @@ impl BigUint {
         carry as u32
     }
 
-    #[inline(always)]
-    pub fn add_mul(&mut self, addition: u32, multiplicator: u32) {
+    /// Perform a multiplication followed by addition. This is a reverse
+    /// of `div_mod` in the sense that when supplied remained for addition
+    /// and the same base for multiplication as divison, the result is
+    /// the original BigUint.
+    #[inline]
+    pub fn mul_add(&mut self, multiplicator: u32, addition: u32) {
         let mut carry = 0u64;
 
         {
@@ -70,11 +76,12 @@ impl BigUint {
     }
 
     /// Check if self is zero.
-    #[inline(always)]
+    #[inline]
     pub fn is_zero(&self) -> bool {
         self.chunks.iter().all(|chunk| *chunk == 0)
     }
 
+    #[inline]
     pub fn into_bytes_be(mut self) -> Vec<u8> {
         let mut skip = 0;
 
@@ -162,10 +169,22 @@ mod tests {
             chunks: vec![0x136AD712,0x84322759]
         };
 
-        let rem = big.rem_div(58);
+        let rem = big.div_mod(58);
         let merged = ((big.chunks[0] as u64) << 32) | big.chunks[1] as u64;
 
         assert_eq!(merged, 0x136AD71284322759 / 58);
         assert_eq!(rem as u64, 0x136AD71284322759 % 58);
+    }
+
+    #[test]
+    fn big_uint_add_mul() {
+        let mut big = BigUint {
+            chunks: vec![0x000AD712,0x84322759]
+        };
+
+        big.mul_add(58, 37);
+        let merged = ((big.chunks[0] as u64) << 32) | big.chunks[1] as u64;
+
+        assert_eq!(merged, (0x000AD71284322759 * 58) + 37);
     }
 }

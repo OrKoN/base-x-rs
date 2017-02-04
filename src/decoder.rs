@@ -15,7 +15,7 @@ macro_rules! decode {
         let mut big = BigUint::with_capacity(4);
 
         for $c in $input.$iter() {
-            big.add_mul($carry as u32, base);
+            big.mul_add(base, $carry as u32);
         }
 
         let mut bytes = big.into_bytes_be();

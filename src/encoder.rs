@@ -26,7 +26,7 @@ macro_rules! encode {
             // a factor of 5) reduces the amount of divisions that need to
             // be done on BigUint, delegating the hard work to regular `u32`
             // operations, which are blazing fast.
-            let mut big_rem = big.rem_div(big_base);
+            let mut big_rem = big.div_mod(big_base);
 
             if big.is_zero() {
                 loop {
