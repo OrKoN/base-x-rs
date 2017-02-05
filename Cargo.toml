@@ -1,13 +1,16 @@
 [package]
 name = "base-x"
 description = "Encode/decode any base"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Alex R. <alexei.rudenko@gmail.com>"]
 license-file = "LICENSE.md"
 readme = "README.md"
 keywords = ["base-x", "base", "convert"]
 repository = "https://github.com/OrKoN/base-x-rs"
 homepage = "https://github.com/OrKoN/base-x-rs"
+
+[dependencies]
+num = "*"
 
 [dev-dependencies]
 json = "0.11"

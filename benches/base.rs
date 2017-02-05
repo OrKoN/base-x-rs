@@ -37,71 +37,40 @@ fn test_encode<A: Alphabet + Copy>(bench: &mut Bencher, alph: A) {
 // Actual benchmarks
 
 // Encode UTF-8
-fn encode_base2_utf8(bench: &mut Bencher) {
+fn encode_base2(bench: &mut Bencher) {
     const ALPH: &'static str = "01";
     test_encode(bench, ALPH);
 }
 
-fn encode_base16_utf8(bench: &mut Bencher) {
+fn encode_base16(bench: &mut Bencher) {
     const ALPH: &'static str = "0123456789abcdef";
     test_encode(bench, ALPH);
 }
 
-fn encode_base58_utf8(bench: &mut Bencher) {
+fn encode_base58(bench: &mut Bencher) {
     const ALPH: &'static str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-    test_encode(bench, ALPH);
-}
-
-// Encode ASCII
-fn encode_base2_ascii(bench: &mut Bencher) {
-    const ALPH: &'static [u8] = b"01";
-    test_encode(bench, ALPH);
-}
-
-fn encode_base16_ascii(bench: &mut Bencher) {
-    const ALPH: &'static [u8] = b"0123456789abcdef";
-    test_encode(bench, ALPH);
-}
-
-fn encode_base58_ascii(bench: &mut Bencher) {
-    const ALPH: &'static [u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
     test_encode(bench, ALPH);
 }
 
 // Decode UTF-8
-fn decode_base2_utf8(bench: &mut Bencher) {
+fn decode_base2(bench: &mut Bencher) {
     const ALPH: &'static str = "01";
     test_decode(bench, ALPH);
 }
 
-fn decode_base16_utf8(bench: &mut Bencher) {
+fn decode_base16(bench: &mut Bencher) {
     const ALPH: &'static str = "0123456789abcdef";
     test_decode(bench, ALPH);
 }
 
-fn decode_base58_utf8(bench: &mut Bencher) {
+fn decode_base58(bench: &mut Bencher) {
     const ALPH: &'static str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
     test_decode(bench, ALPH);
 }
 
-// Decode ASCII
-fn decode_base2_ascii(bench: &mut Bencher) {
-    const ALPH: &'static [u8] = b"01";
-    test_decode(bench, ALPH);
-}
-
-fn decode_base16_ascii(bench: &mut Bencher) {
-    const ALPH: &'static [u8] = b"0123456789abcdef";
-    test_decode(bench, ALPH);
-}
-
-fn decode_base58_ascii(bench: &mut Bencher) {
-    const ALPH: &'static [u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-    test_decode(bench, ALPH);
-}
-
 benchmark_group!(benches,
-    encode_base2_ascii, encode_base2_utf8, encode_base16_ascii, encode_base16_utf8, encode_base58_ascii, encode_base58_utf8,
-    decode_base2_ascii, decode_base2_utf8, decode_base16_ascii, decode_base16_utf8, decode_base58_ascii, decode_base58_utf8
+    encode_base2, decode_base2,
+    encode_base16, decode_base16,
+    encode_base58, decode_base58
 );
 benchmark_main!(benches);

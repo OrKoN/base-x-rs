@@ -23,9 +23,13 @@
 //! }
 //! ```
 
-mod alphabet;
+pub mod decoder;
+pub mod encoder;
+pub mod alphabet;
 
-pub use alphabet::{Alphabet, CharLookup};
+pub use decoder::{AsciiDecoder, Utf8Decoder};
+pub use encoder::{AsciiEncoder, Utf8Encoder};
+pub use alphabet::Alphabet;
 
 use std::error::Error;
 use std::fmt;
@@ -47,88 +51,12 @@ impl Error for DecodeError {
 
 /// Encode an input vector using the given alphabet.
 pub fn encode<A: Alphabet>(alphabet: A, input: &[u8]) -> String {
-    if input.len() == 0 {
-        return String::new();
-    }
-
-    let base = alphabet.base() as u16;
-
-    let mut digits: Vec<u16> = Vec::with_capacity(input.len());
-
-    digits.push(0);
-
-    for c in input {
-        let mut carry = *c as u16;
-
-        for digit in digits.iter_mut() {
-            carry += *digit << 8;
-            *digit = carry % base;
-            carry /= base;
-        }
-
-        while carry > 0 {
-            digits.push(carry % base);
-            carry /= base;
-        }
-    }
-
-    let leaders = input
-        .iter()
-        .take(input.len() - 1)
-        .take_while(|i| **i == 0)
-        .map(|_| 0);
-
-    digits.extend(leaders);
-
-    let encoded = digits
-        .iter()
-        .rev()
-        .map(|digit| alphabet.get(*digit as usize));
-
-    let mut result = String::new();
-    result.extend(encoded);
-
-    result
+    alphabet.encode(input)
 }
 
 /// Decode an input vector using the given alphabet.
 pub fn decode<A: Alphabet>(alphabet: A, input: &str) -> Result<Vec<u8>, DecodeError> {
-    if input.len() == 0 {
-        return Ok(Vec::new());
-    }
-
-    let base = alphabet.base() as u16;
-    let lookup = alphabet.lookup_table();
-
-    let mut bytes = Vec::with_capacity(input.len());
-    bytes.push(0u8);
-
-    for c in input.chars() {
-        let mut carry = lookup.get(c).ok_or(DecodeError)? as u16;
-
-        for byte in bytes.iter_mut() {
-            carry += base * *byte as u16;
-            *byte = carry as u8;
-            carry >>= 8;
-        }
-
-        while carry > 0 {
-            bytes.push(carry as u8);
-            carry >>= 8;
-        }
-    }
-
-    let leader = alphabet.get(0) as u8;
-
-    let leaders = input
-        .bytes()
-        .take(input.len() - 1)
-        .take_while(|byte| *byte == leader)
-        .map(|_| 0);
-
-    bytes.extend(leaders);
-    bytes.reverse();
-    Ok(bytes)
+    alphabet.decode(input)
 }
 
 #[cfg(test)]
