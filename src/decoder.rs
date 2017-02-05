@@ -1,4 +1,5 @@
 use DecodeError;
+use bigint::BigUint;
 
 pub struct AsciiDecoder;
 pub struct Utf8Decoder;
@@ -9,36 +10,27 @@ macro_rules! decode {
             return Ok(Vec::new());
         }
 
-        let base = $alpha.len() as u16;
+        let base = $alpha.len() as u32;
 
-        let mut bytes = Vec::with_capacity($input.len());
-        bytes.push(0u8);
+        let mut big = BigUint::with_capacity(4);
 
         for $c in $input.$iter() {
-            let mut carry = $carry as u16;
-
-            for byte in bytes.iter_mut() {
-                carry += base * *byte as u16;
-                *byte = carry as u8;
-                carry >>= 8;
-            }
-
-            while carry > 0 {
-                bytes.push(carry as u8);
-                carry >>= 8;
-            }
+            big.mul_add(base, $carry as u32);
         }
+
+        let mut bytes = big.into_bytes_be();
 
         let leader = $alpha[0];
 
         let leaders = $input
             .$iter()
-            .take($input.len() - 1)
             .take_while(|byte| *byte == leader)
-            .map(|_| 0);
+            .count();
 
-        bytes.extend(leaders);
-        bytes.reverse();
+        for _ in 0..leaders {
+            bytes.insert(0, 0);
+        }
+
         Ok(bytes)
     })
 }

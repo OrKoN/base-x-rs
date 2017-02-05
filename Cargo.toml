@@ -9,9 +9,6 @@ keywords = ["base-x", "base", "convert"]
 repository = "https://github.com/OrKoN/base-x-rs"
 homepage = "https://github.com/OrKoN/base-x-rs"
 
-[dependencies]
-num = "*"
-
 [dev-dependencies]
 json = "0.11"
 bencher = "0.1"

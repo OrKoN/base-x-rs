@@ -1,29 +1,47 @@
+use bigint::BigUint;
+
 pub struct AsciiEncoder;
 pub struct Utf8Encoder;
 
 macro_rules! encode {
-    ($alpha:ident, $input:ident, $dig:ty) => ({
+    ($alpha:ident, $input:ident) => ({
         if $input.len() == 0 {
             return String::new();
         }
 
-        let base = $alpha.len() as u16;
+        let base = $alpha.len() as u32;
 
-        let mut digits: Vec<$dig> = Vec::with_capacity($input.len());
-        digits.push(0);
+        // Convert the input byte array to a BigUint
+        let mut big = BigUint::from_bytes_be($input);
+        let mut out = Vec::with_capacity($input.len());
 
-        for c in $input {
-            let mut carry = *c as u16;
+        // Find the highest power of `base` that fits in `u32`
+        let big_pow = 32 / (32 - base.leading_zeros());
+        let big_base = base.pow(big_pow);
 
-            for digit in digits.iter_mut() {
-                carry |= (*digit as u16) << 8;
-                *digit = (carry % base) as $dig;
-                carry /= base;
-            }
+        'fast: loop {
+            // Instead of diving by `base`, we divide by the `big_base`,
+            // giving us a bigger remainder that we can further subdivide
+            // by the original `base`. This greatly (in case of base58 it's
+            // a factor of 5) reduces the amount of divisions that need to
+            // be done on BigUint, delegating the hard work to regular `u32`
+            // operations, which are blazing fast.
+            let mut big_rem = big.div_mod(big_base);
 
-            while carry > 0 {
-                digits.push((carry % base) as $dig);
-                carry /= base;
+            if big.is_zero() {
+                loop {
+                    out.push($alpha[(big_rem % base) as usize]);
+                    big_rem /= base;
+
+                    if big_rem == 0 {
+                        break 'fast; // teehee
+                    }
+                }
+            } else {
+                for _ in 0..big_pow {
+                    out.push($alpha[(big_rem % base) as usize]);
+                    big_rem /= base;
+                }
             }
         }
 
@@ -31,42 +49,30 @@ macro_rules! encode {
             .iter()
             .take($input.len() - 1)
             .take_while(|i| **i == 0)
-            .map(|_| 0);
+            .map(|_| $alpha[0]);
 
-        digits.extend(leaders);
+        out.extend(leaders);
 
-        digits
+        out
     })
 }
 
 impl AsciiEncoder {
     #[inline(always)]
     pub fn encode(alphabet: &[u8], input: &[u8]) -> String {
-        let mut digits = encode!(alphabet, input, u8);
+        let mut out = encode!(alphabet, input);
 
-        digits.reverse();
+        out.reverse();
 
-        for digit in digits.iter_mut() {
-            *digit = alphabet[*digit as usize];
-        }
-
-        String::from_utf8(digits).expect("Alphabet must be ASCII")
+        String::from_utf8(out).expect("Alphabet must be ASCII")
     }
 }
 
 impl Utf8Encoder {
     #[inline(always)]
     pub fn encode(alphabet: &[char], input: &[u8]) -> String {
-        let digits = encode!(alphabet, input, u8);
+        let out = encode!(alphabet, input);
 
-        let encoded = digits
-            .iter()
-            .rev()
-            .map(|digit| alphabet[*digit as usize]);
-
-        let mut result = String::new();
-        result.extend(encoded);
-
-        result
+        out.iter().rev().map(|char| *char).collect()
     }
 }

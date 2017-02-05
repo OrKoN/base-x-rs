@@ -23,6 +23,7 @@
 //! }
 //! ```
 
+mod bigint;
 pub mod decoder;
 pub mod encoder;
 pub mod alphabet;
