@@ -23,13 +23,11 @@
 //! }
 //! ```
 
+pub mod alphabet;
 mod bigint;
 pub mod decoder;
 pub mod encoder;
-pub mod alphabet;
 
-pub use decoder::{AsciiDecoder, Utf8Decoder};
-pub use encoder::{AsciiEncoder, Utf8Encoder};
 pub use alphabet::Alphabet;
 
 use std::error::Error;
@@ -62,8 +60,8 @@ pub fn decode<A: Alphabet>(alphabet: A, input: &str) -> Result<Vec<u8>, DecodeEr
 
 #[cfg(test)]
 mod test {
-    use super::encode;
     use super::decode;
+    use super::encode;
     extern crate json;
     use self::json::parse;
     use std::fs::File;
@@ -100,10 +98,13 @@ mod test {
         // binary, kinda...
         let alphabet = "😐😀";
 
-        let encoded = encode(alphabet, &[0xff,0x00,0xff,0x00]);
+        let encoded = encode(alphabet, &[0xff, 0x00, 0xff, 0x00]);
         let decoded = decode(alphabet, &encoded).unwrap();
 
-        assert_eq!(encoded, "😀😀😀😀😀😀😀😀😐😐😐😐😐😐😐😐😀😀😀😀😀😀😀😀😐😐😐😐😐😐😐😐");
-        assert_eq!(decoded, &[0xff,0x00,0xff,0x00]);
+        assert_eq!(
+            encoded,
+            "😀😀😀😀😀😀😀😀😐😐😐😐😐😐😐😐😀😀😀😀😀😀😀😀😐😐😐😐😐😐😐😐"
+        );
+        assert_eq!(decoded, &[0xff, 0x00, 0xff, 0x00]);
     }
 }
