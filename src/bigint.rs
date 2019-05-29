@@ -13,7 +13,7 @@ use std::{ptr, u32};
 /// Turns out those are all the operations you need to encode and decode
 /// base58, or anything else, really.
 pub struct BigUint {
-    pub chunks: Vec<u32>
+    pub chunks: Vec<u32>,
 }
 
 impl BigUint {
@@ -23,9 +23,7 @@ impl BigUint {
 
         chunks.push(0);
 
-        BigUint {
-            chunks: chunks
-        }
+        BigUint { chunks }
     }
 
     /// Divide self by `divider`, return the remainder of the operation.
@@ -34,12 +32,12 @@ impl BigUint {
         let mut carry = 0u64;
 
         for chunk in self.chunks.iter_mut() {
-            carry = (carry << 32) | *chunk as u64;
-            *chunk = (carry / divider as u64) as u32;
-            carry %= divider as u64;
+            carry = (carry << 32) | u64::from(*chunk);
+            *chunk = (carry / u64::from(divider)) as u32;
+            carry %= u64::from(divider);
         }
 
-        if self.chunks[0] == 0 && self.chunks.len() > 0 {
+        if let Some(0) = self.chunks.get(0) {
             self.chunks.remove(0);
         }
 
@@ -58,13 +56,13 @@ impl BigUint {
             let mut iter = self.chunks.iter_mut().rev();
 
             if let Some(chunk) = iter.next() {
-                carry = (*chunk as u64 * multiplicator as u64) + addition as u64;
+                carry = u64::from(*chunk) * u64::from(multiplicator) + u64::from(addition);
                 *chunk = carry as u32;
                 carry >>= 32;
             }
 
             for chunk in iter {
-                carry += *chunk as u64 * multiplicator as u64;
+                carry += u64::from(*chunk) * u64::from(multiplicator);
                 *chunk = carry as u32;
                 carry >>= 32;
             }
@@ -141,49 +139,50 @@ impl BigUint {
             *chunk = u32::from_be(*chunk);
         }
 
-        BigUint {
-            chunks: chunks
-        }
+        BigUint { chunks }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unreadable_literal)]
     use super::BigUint;
 
     #[test]
     fn big_uint_from_bytes() {
         let bytes: &[u8] = &[
-                      0xDE,0xAD,0x00,0x00,0x00,0x13,
-            0x37,0xAD,0x00,0x00,0x00,0x00,0xDE,0xAD,
+            0xDE, 0xAD, 0x00, 0x00, 0x00, 0x13, 0x37, 0xAD, 0x00, 0x00, 0x00, 0x00, 0xDE, 0xAD,
         ];
 
         let big = BigUint::from_bytes_be(bytes);
 
-        assert_eq!(big.chunks, vec![0x0000DEAD, 0x00000013, 0x37AD0000, 0x0000DEAD]);
+        assert_eq!(
+            big.chunks,
+            vec![0x0000DEAD, 0x00000013, 0x37AD0000, 0x0000DEAD]
+        );
     }
 
     #[test]
     fn big_uint_rem_div() {
         let mut big = BigUint {
-            chunks: vec![0x136AD712,0x84322759]
+            chunks: vec![0x136AD712, 0x84322759],
         };
 
         let rem = big.div_mod(58);
-        let merged = ((big.chunks[0] as u64) << 32) | big.chunks[1] as u64;
+        let merged = (u64::from(big.chunks[0]) << 32) | u64::from(big.chunks[1]);
 
         assert_eq!(merged, 0x136AD71284322759 / 58);
-        assert_eq!(rem as u64, 0x136AD71284322759 % 58);
+        assert_eq!(u64::from(rem), 0x136AD71284322759 % 58);
     }
 
     #[test]
     fn big_uint_add_mul() {
         let mut big = BigUint {
-            chunks: vec![0x000AD712,0x84322759]
+            chunks: vec![0x000AD712, 0x84322759],
         };
 
         big.mul_add(58, 37);
-        let merged = ((big.chunks[0] as u64) << 32) | big.chunks[1] as u64;
+        let merged = (u64::from(big.chunks[0]) << 32) | u64::from(big.chunks[1]);
 
         assert_eq!(merged, (0x000AD71284322759 * 58) + 37);
     }
