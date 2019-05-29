@@ -1,10 +1,9 @@
 [package]
 name = "base-x"
 description = "Encode/decode any base"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["Alex R. <alexei.rudenko@gmail.com>"]
 license = "MIT"
-license-file = "LICENSE.md"
 readme = "README.md"
 keywords = ["base-x", "base", "convert"]
 repository = "https://github.com/OrKoN/base-x-rs"
