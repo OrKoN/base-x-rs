@@ -3,6 +3,9 @@
 [![Build Status](https://travis-ci.org/OrKoN/base-x-rs.svg?branch=master)](https://travis-ci.org/OrKoN/base-x-rs)
 
 This is a Rust fork of https://github.com/cryptocoinjs/base-x
+
+**WARNING:** This module is **NOT RFC3548** compliant,  it cannot be used for base16 (hex), base32, or base64 encoding in a standards compliant manner. 
+
 And this my very first Rust project: please review the source code!
 
 ## Installation
