@@ -1,3 +1,5 @@
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
 use bigint::BigUint;
 
 pub(crate) fn encode<T>(alpha: &[T], input: &[u8]) -> Vec<T>

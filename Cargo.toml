@@ -18,3 +18,7 @@ rand = "0.3"
 [[bench]]
 name = "base"
 harness = false
+
+[features]
+default = ["std"]
+std = []

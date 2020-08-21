@@ -1,3 +1,9 @@
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
+
+#[cfg(not(feature = "std"))]
+use core as std;
+
 use std::{ptr, u32};
 
 /// This is a pretty naive implementation of a BigUint abstracting all
