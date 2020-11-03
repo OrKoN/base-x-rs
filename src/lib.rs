@@ -23,6 +23,11 @@
 //! }
 //! ```
 
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+
 pub mod alphabet;
 mod bigint;
 pub mod decoder;
@@ -30,7 +35,12 @@ pub mod encoder;
 
 pub use alphabet::Alphabet;
 
-use std::error::Error;
+#[cfg(not(feature = "std"))]
+use alloc::{string::String, vec::Vec};
+
+#[cfg(not(feature = "std"))]
+use core as std;
+
 use std::fmt;
 
 #[derive(Debug)]
@@ -42,7 +52,8 @@ impl fmt::Display for DecodeError {
     }
 }
 
-impl Error for DecodeError {
+#[cfg(features = "std")]
+impl std::error::Error for DecodeError {
     fn description(&self) -> &str {
         "Can not decode the provided data"
     }

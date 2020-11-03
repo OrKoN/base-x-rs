@@ -1,3 +1,5 @@
+#[cfg(not(feature = "std"))]
+use alloc::{string::String, vec::Vec};
 use DecodeError;
 
 use decoder::*;

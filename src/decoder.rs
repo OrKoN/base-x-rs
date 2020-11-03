@@ -1,3 +1,9 @@
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
+
+#[cfg(not(feature = "std"))]
+use core as std;
+
 use bigint::BigUint;
 use DecodeError;
 
@@ -43,7 +49,6 @@ where
     }
 }
 
-
 pub(crate) struct U8Decoder<'b> {
     alphabet: &'b [u8],
     lookup: [u8; 256],
@@ -60,7 +65,6 @@ impl<'a> U8Decoder<'a> {
         }
         U8Decoder { alphabet, lookup }
     }
-
 }
 
 impl<'a, 'b> Decoder<'a, 'b> for U8Decoder<'b> {
