@@ -1,7 +1,7 @@
 [package]
 name = "base-x"
 description = "Encode/decode any base"
-version = "0.2.6"
+version = "0.2.7"
 authors = ["Alex R. <alexei.rudenko@gmail.com>"]
 license = "MIT"
 readme = "README.md"
