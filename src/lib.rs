@@ -52,7 +52,7 @@ impl fmt::Display for DecodeError {
     }
 }
 
-#[cfg(features = "std")]
+#[cfg(feature = "std")]
 impl std::error::Error for DecodeError {
     fn description(&self) -> &str {
         "Can not decode the provided data"
