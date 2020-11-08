@@ -20,5 +20,5 @@ name = "base"
 harness = false
 
 [features]
-default = ["std"]
+default-features = ["std"]
 std = []
