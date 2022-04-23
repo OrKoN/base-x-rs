@@ -13,8 +13,8 @@ where
 {
     type Iter: std::iter::Iterator;
 
-    fn iter(&'a str) -> Self::Iter;
-    fn carry(&self, <Self::Iter as std::iter::Iterator>::Item) -> Option<u32>;
+    fn iter(_: &'a str) -> Self::Iter;
+    fn carry(&self, _: <Self::Iter as std::iter::Iterator>::Item) -> Option<u32>;
     fn alphabet<'c>(&self) -> &'c [<Self::Iter as std::iter::Iterator>::Item]
     where
         'b: 'c;
