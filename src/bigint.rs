@@ -108,16 +108,16 @@ impl BigUint {
             *chunk = u32::to_be(*chunk);
         }
 
+        let mut bytes = Vec::with_capacity(len);
         unsafe {
-            let mut bytes = Vec::with_capacity(len);
             bytes.set_len(len);
 
             let chunks_ptr = (self.chunks.as_ptr() as *const u8).offset(skip as isize);
 
             ptr::copy_nonoverlapping(chunks_ptr, bytes.as_mut_ptr(), len);
 
-            bytes
         }
+            bytes
     }
 
     #[inline]
